@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Suggestion Box | Camel Industries</title>
+    <style>
+        :root {
+            --bg-color: #f4e4bc;
+            --section-bg: rgba(255, 250, 240, 0.6);
+            --text-color: #333;
+            --heading-color: #a0522d;
+            --btn-bg: #8b4513;
+            --check-green: #2ecc71;
+            --nav-bg: #a0522d;
+            --scroll-thumb: #000000;
+            --scroll-hover: #333333;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #2c241a;
+            --section-bg: rgba(50, 40, 30, 0.9);
+            --text-color: #f4e4bc;
+            --heading-color: #eeb462;
+            --nav-bg: #1a150f;
+            --btn-bg: #cd853f;
+            --scroll-thumb: #ffffff;
+            --scroll-hover: #e0e0e0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 0;
+            margin: 0;
+            line-height: 1.6;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        nav {
+            background-color: var(--nav-bg);
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.4s ease;
+        }
+
+        nav a {
+            color: #fffaf0 !important;
+            text-decoration: none;
+            margin: 0 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--btn-bg);
+            color: #fffaf0;
+            border: none;
+            cursor: pointer;
+            z-index: 2000;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: var(--section-bg);
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #cd853f33;
+        }
+
+        h1 {
+            color: var(--heading-color);
+            font-size: 3rem;
+            margin-bottom: 10px;
+            transition: color 0.4s ease;
+        }
+
+        h2 {
+            color: var(--heading-color);
+            border-bottom: 2px solid #cd853f;
+            padding-bottom: 10px;
+        }
+
+        .visitor-note {
+            font-size: 0.85rem;
+            font-style: italic;
+            margin-bottom: 20px;
+            color: var(--heading-color);
+        }
+
+        textarea {
+            width: 95%;
+            height: 80px;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid var(--heading-color);
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .btn {
+            background-color: var(--btn-bg);
+            color: #fffaf0;
+            padding: 12px 24px;
+            margin-top: 15px;
+            border-radius: 4px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+
+        .idea-list {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .idea-item {
+            background: var(--heading-color);
+            color: white;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: var(--check-green);
+        }
+
+        .idea-item.completed {
+            background: #2d3e50;
+            opacity: 0.8;
+        }
+
+        .idea-item.completed .idea-text {
+            text-decoration: line-through;
+            color: var(--check-green);
+        }
+
+        .content-area {
+            flex-grow: 1;
+        }
+
+        .idea-text {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .idea-date {
+            display: block;
+            font-size: 0.75rem;
+            opacity: 0.7;
+            font-style: italic;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--scroll-thumb);
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="arcade.file">Arcade</a>
+        <a href="calendar.file">Schedule</a>
+    </nav>
+
+    <div class="container">
+        <h2>Camel Suggestion Box</h2>
+        <p class="visitor-note">Visitors: Leave a comment below!</p>
+        <textarea id="ideaInput" placeholder="Write your suggestion here..."></textarea>
+        <br>
+        <button class="btn" onclick="postIdea()">Submit Suggestion</button>
+        <div class="idea-list" id="ideaList"></div>
+    </div>
+
+    <script>
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('themeBtn').innerHTML = "☀️";
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const btn = document.getElementById('themeBtn');
+            if (html.getAttribute('data-theme') === 'dark') {
+                html.removeAttribute('data-theme');
+                btn.innerHTML = "🌙";
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                btn.innerHTML = "☀️";
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        function postIdea() {
+            const input = document.getElementById('ideaInput');
+            const text = input.value.trim();
+            if (text !== "") {
+                const now = new Date();
+                const dateString = now.toLocaleDateString() + " at " + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const ideaObject = { text: text, date: dateString, completed: false };
+                const savedIdeas = JSON.parse(localStorage.getItem('camelIdeas')) || [];
+                savedIdeas.unshift(ideaObject);
+                localStorage.setItem('camelIdeas', JSON.stringify(savedIdeas));
+                input.value = "";
+                displayIdeas();
+            }
+        }
+
+        function displayIdeas() {
+            const list = document.getElementById('ideaList');
+            const savedIdeas = JSON.parse(localStorage.getItem('camelIdeas')) || [];
+            list.innerHTML = "";
+            savedIdeas.forEach((idea, index) => {
+                const newItem = document.createElement('div');
+                newItem.className = `idea-item ${idea.completed ? 'completed' : ''}`;
+                newItem.innerHTML = `
+                    <div class="checkbox-container">
+                        <input type="checkbox" ${idea.completed ? 'checked' : ''} onclick="toggleComplete(${index})">
+                    </div>
+                    <div class="content-area">
+                        <span class="idea-text">💬 ${idea.text}</span>
+                        <span class="idea-date">${idea.date}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteIdea(${index})">✕</button>
+                `;
+                list.appendChild(newItem);
+            });
+        }
+
+        function toggleComplete(index) {
+            const savedIdeas = JSON.parse(localStorage.getItem('camelIdeas')) || [];
+            savedIdeas[index].completed = !savedIdeas[index].completed;
+            localStorage.setItem('camelIdeas', JSON.stringify(savedIdeas));
+            displayIdeas();
+        }
+
+        function deleteIdea(index) {
+            if (confirm("Remove this comment?")) {
+                const savedIdeas = JSON.parse(localStorage.getItem('camelIdeas')) || [];
+                savedIdeas.splice(index, 1);
+                localStorage.setItem('camelIdeas', JSON.stringify(savedIdeas));
+                displayIdeas();
+            }
+        }
+
+       
+        displayIdeas();
+    </script>
+</body>
+</html>

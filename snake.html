@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Snake style</title>
+  <style>
+    :root{
+      --bg-color: #4e7cf6;
+      --grass-light: #aad751;
+      --grass-dark: #a2d149;
+      --snake-head: #4285f4;
+      --snake-body: #528ff5;
+      --apple-red: #e91e63;
+      --panel-bg: #4a752c;
+    }
+
+    html, body{
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      font-family: 'Roboto', 'Arial', sans-serif;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    #game-wrapper{
+      position: relative;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 8px solid var(--panel-bg);
+      background: linear-gradient(180deg,var(--grass-light) 0%,var(--grass-dark) 100%);
+    }
+
+    #score-panel{
+      width: 600px;
+      height: 60px;
+      background-color: var(--panel-bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      color: white;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .stat-item{ display:flex; align-items:center; gap:10px; }
+
+    .apple-icon{
+      width:24px;
+      height:24px;
+      background: var(--apple-red);
+      border-radius:50%;
+      position:relative;
+    }
+    .apple-icon::after{
+      content:'';
+      position:absolute;
+      top:-5px;
+      left:10px;
+      width:4px;
+      height:8px;
+      background:#4caf50;
+      border-radius:2px;
+    }
+
+    .trophy-icon{
+      width:24px;
+      height:15px;
+      background:#fbbc05;
+      border-radius:0 0 10px 10px;
+      position:relative;
+    }
+
+    #snakeCanvas{
+      display:block;
+      background: transparent;
+      width: 600px;
+      height: 600px;
+    }
+
+    #controls{
+      display:flex;
+      gap:8px;
+      padding:10px;
+      justify-content:center;
+      background: rgba(0,0,0,0.05);
+    }
+    #controls button{
+      padding:8px 12px;
+      font-size:16px;
+      border-radius:6px;
+      border:1px solid rgba(0,0,0,0.12);
+      background:white;
+      cursor:pointer;
+    }
+  </style>
+</head>
+<body>
+  <h3>
+    <a href="index.html">Home</a>
+    &nbsp;|&nbsp;
+    <a href="arcade.file">Back</a>
+  </h3>
+
+  <div id="game-wrapper">
+    <div id="score-panel">
+      <div class="stat-item">
+        <div class="apple-icon"></div>
+        <span id="current-score">0</span>
+      </div>
+
+      <div class="stat-item">
+        <div class="trophy-icon"></div>
+        <span id="best-score">0</span>
+      </div>
+    </div>
+
+    <canvas id="snakeCanvas" width="600" height="600"></canvas>
+
+    <div id="controls" style="display:flex;">
+      <button id="up">w</button>
+      <button id="left">a</button>
+      <button id="right">d</button>
+      <button id="down">s</button>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('snakeCanvas');
+const ctx = canvas.getContext('2d');
+const appleCountText = document.getElementById('current-score');
+const bestScoreText = document.getElementById('best-score');
+
+const CONFIG = {
+  gridSize: 20,
+  tilePixelSize: 30,
+  initialSpeed: 120,
+  snakeHeadColor: '#4285f4',
+  snakeBodyColor: '#528ff5',
+  eyeColor: '#ffffff',
+  pupilColor: '#000000'
+};
+
+let GAME = {
+  score: 0,
+  bestScore: localStorage.getItem('googleSnakeBest') || 0,
+  running: false,
+  paused: false,
+  lastFrameTime: 0,
+  accumulator: 0,
+  tickRate: CONFIG.initialSpeed
+};
+
+let SNAKE = {
+  body: [
+    { x: 8, y: 10 },
+    { x: 7, y: 10 },
+    { x: 6, y: 10 }
+  ],
+  direction: { x: 1, y: 0 },
+  nextDirection: { x: 1, y: 0 },
+  didEat: false,
+  eyesAngle: 0
+};
+
+let FOOD = {
+  x: 15,
+  y: 10,
+  bounce: 0,
+  type: 'apple'
+};
+
+function init() {
+  canvas.width = CONFIG.gridSize * CONFIG.tilePixelSize;
+  canvas.height = CONFIG.gridSize * CONFIG.tilePixelSize;
+  bestScoreText.innerText = GAME.bestScore;
+  setupInput();
+  requestAnimationFrame(mainLoop);
+}
+
+function drawGrid() {
+  const tileWidth = CONFIG.tilePixelSize;
+  const tileHeight = CONFIG.tilePixelSize;
+
+  for (let row = 0; row < CONFIG.gridSize; row++) {
+    for (let col = 0; col < CONFIG.gridSize; col++) {
+      ctx.fillStyle = (row + col) % 2 === 0 ? '#aad751' : '#a2d149';
+      ctx.fillRect(col * tileWidth, row * tileHeight, tileWidth, tileHeight);
+    }
+  }
+}
+
+function drawBoardEdge() {
+  ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+  ctx.lineWidth = 10;
+  ctx.strokeRect(0, 0, canvas.width, canvas.height);
+}
+
+function setupInput() {
+  window.addEventListener('keydown', (e) => {
+    // preventDefault for mapped keys if needed
+    if (["wUp", "sDown", "aLeft", "dRight"].includes(e.key)) {
+      e.preventDefault();
+    }
+
+    switch (e.key) {
+      case 'wUp':
+      case 'w':
+      case 'W':
+        if (SNAKE.direction.y !== 1) SNAKE.nextDirection = { x: 0, y: -1 };
+        break;
+      case 'sDown':
+      case 's':
+      case 'S':
+        if (SNAKE.direction.y !== -1) SNAKE.nextDirection = { x: 0, y: 1 };
+        break;
+      case 'aLeft':
+      case 'a':
+      case 'A':
+        if (SNAKE.direction.x !== 1) SNAKE.nextDirection = { x: -1, y: 0 };
+        break;
+      case 'dRight':
+      case 'd':
+      case 'D':
+        if (SNAKE.direction.x !== -1) SNAKE.nextDirection = { x: 1, y: 0 };
+        break;
+      case ' ':
+        GAME.paused = !GAME.paused;
+        break;
+    }
+  });
+}
+
+function drawSnakeHead(headX, headY) {
+  const size = CONFIG.tilePixelSize;
+  const px = headX * size;
+  const py = headY * size;
+
+  ctx.save();
+  ctx.translate(px + size / 2, py + size / 2);
+  const angle = Math.atan2(SNAKE.direction.y, SNAKE.direction.x);
+  ctx.rotate(angle);
+
+  ctx.fillStyle = CONFIG.snakeHeadColor;
+  ctx.beginPath();
+  ctx.roundRect(-size / 2 + 2, -size / 2 + 2, size - 4, size - 4, 8);
+  ctx.fill();
+
+  const eyeOffsetX = size * 0.2;
+  const eyeOffsetY = size * 0.25;
+
+  ctx.fillStyle = CONFIG.eyeColor;
+  ctx.beginPath();
+  ctx.arc(eyeOffsetX, -eyeOffsetY, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(eyeOffsetX, eyeOffsetY, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = CONFIG.pupilColor;
+  ctx.beginPath();
+  ctx.arc(eyeOffsetX + 2, -eyeOffsetY, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(eyeOffsetX + 2, eyeOffsetY, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawSnakeBody() {
+  const size = CONFIG.tilePixelSize;
+
+  for (let i = 1; i < SNAKE.body.length; i++) {
+    const segment = SNAKE.body[i];
+    const px = segment.x * size;
+    const py = segment.y * size;
+
+    ctx.save();
+
+    const taperScale = 1 - (i / SNAKE.body.length) * 0.3;
+    const margin = (size * (1 - taperScale)) / 2;
+
+    ctx.fillStyle = CONFIG.snakeBodyColor;
+    ctx.beginPath();
+
+    if (i === SNAKE.body.length - 1) {
+      drawTailTip(segment, SNAKE.body[i - 1], size);
+    } else {
+      ctx.roundRect(
+        px + 2 + margin,
+        py + 2 + margin,
+        size - 4 - margin * 2,
+        size - 4 - margin * 2,
+        6
+      );
+      ctx.fill();
+    }
+
+    drawBodyJoint(segment, SNAKE.body[i - 1], size);
+    ctx.restore();
+  }
+}
+
+function drawBodyJoint(current, previous, size) {
+  const cx = current.x * size + size / 2;
+  const cy = current.y * size + size / 2;
+  const px = previous.x * size + size / 2;
+  const py = previous.y * size + size / 2;
+
+  ctx.strokeStyle = CONFIG.snakeBodyColor;
+  ctx.lineWidth = size - 8;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(px, py);
+  ctx.stroke();
+}
+
+function drawTailTip(tail, prev, size) {
+  const tx = tail.x * size + size / 2;
+  const ty = tail.y * size + size / 2;
+  ctx.fillStyle = CONFIG.snakeBodyColor;
+  ctx.beginPath();
+  ctx.arc(tx, ty, size / 2 - 6, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawApple() {
+  const size = CONFIG.tilePixelSize;
+  const ax = FOOD.x * size + size / 2;
+  const ay = FOOD.y * size + size / 2;
+
+  FOOD.bounce += 0.08;
+  const wobble = Math.sin(FOOD.bounce) * 3;
+
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,0.15)";
+  ctx.beginPath();
+  ctx.ellipse(ax, ay + 12, 10 - wobble / 2, 5 - wobble / 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.translate(ax, ay + wobble);
+  ctx.fillStyle = '#e91e63';
+  ctx.beginPath();
+  ctx.arc(0, 0, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#4caf50';
+  ctx.beginPath();
+  ctx.ellipse(2, -12, 4, 2, Math.PI / 4, 0, Math.PI * 2); // Leaf
+  ctx.fill();
+
+  ctx.fillStyle = '#795548';
+  ctx.fillRect(-1, -12, 2, 5);
+  ctx.restore();
+}
+
+function updateGameLogic() {
+  if (GAME.paused || !GAME.running) return;
+
+  SNAKE.direction = SNAKE.nextDirection;
+  const newHead = {
+    x: SNAKE.body[0].x + SNAKE.direction.x,
+    y: SNAKE.body[0].y + SNAKE.direction.y
+  };
+
+  // Border collision
+  if (
+    newHead.x < 0 ||
+    newHead.x >= CONFIG.gridSize ||
+    newHead.y < 0 ||
+    newHead.y >= CONFIG.gridSize
+  ) {
+    triggerGameOver();
+    return;
+  }
+
+  // Self collision
+  for (let i = 0; i < SNAKE.body.length; i++) {
+    if (newHead.x === SNAKE.body[i].x && newHead.y === SNAKE.body[i].y) {
+      triggerGameOver();
+      return;
+    }
+  }
+
+  SNAKE.body.unshift(newHead);
+
+  if (newHead.x === FOOD.x && newHead.y === FOOD.y) {
+    handleEatFood();
+  } else {
+    SNAKE.body.pop();
+  }
+}
+
+function placeFood() {
+  let validPos = false;
+  let newX, newY;
+
+  while (!validPos) {
+    newX = Math.floor(Math.random() * CONFIG.gridSize);
+    newY = Math.floor(Math.random() * CONFIG.gridSize);
+    validPos = true;
+
+    for (let i = 0; i < SNAKE.body.length; i++) {
+      if (SNAKE.body[i].x === newX && SNAKE.body[i].y === newY) {
+        validPos = false;
+        break;
+      }
+    }
+  }
+
+  FOOD.x = newX;
+  FOOD.y = newY;
+  FOOD.bounce = 0;
+}
+
+function handleEatFood() {
+  GAME.score++;
+  appleCountText.innerText = GAME.score;
+
+  if (GAME.score % 5 === 0 && GAME.tickRate > 50) {
+    GAME.tickRate -= 5;
+  }
+
+  placeFood();
+}
+
+function triggerGameOver() {
+  GAME.running = false;
+
+  if (GAME.score > GAME.bestScore) {
+    GAME.bestScore = GAME.score;
+    localStorage.setItem('googleSnakeBest', GAME.bestScore);
+    bestScoreText.innerText = GAME.bestScore;
+  }
+
+  ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  setTimeout(() => {
+    drawGameOverScreen();
+  }, 500);
+}
+
+function drawGameOverScreen() {
+  ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 40px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
+
+  ctx.font = "20px Arial";
+  ctx.fillText("SCORE: " + GAME.score, canvas.width / 2, canvas.height / 2 + 30);
+  ctx.fillText("PRESS ANY KEY TO RESTART", canvas.width / 2, canvas.height / 2 + 70);
+}
+
+function mainLoop(timestamp) {
+  if (!GAME.lastFrameTime) GAME.lastFrameTime = timestamp;
+  const deltaTime = timestamp - GAME.lastFrameTime;
+  GAME.lastFrameTime = timestamp;
+
+  if (GAME.running && !GAME.paused) {
+    GAME.accumulator += deltaTime;
+    while (GAME.accumulator >= GAME.tickRate) {
+      updateGameLogic();
+      GAME.accumulator -= GAME.tickRate;
+    }
+  }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGrid();
+  drawBoardEdge();
+  drawApple();
+  drawSnakeBody();
+  drawSnakeHead(SNAKE.body[0].x, SNAKE.body[0].y);
+
+  if (!GAME.running && GAME.score > 0) {
+    drawGameOverScreen();
+  } else if (!GAME.running && GAME.score === 0) {
+    drawStartMessage();
+  }
+
+  requestAnimationFrame(mainLoop);
+}
+
+function drawStartMessage() {
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.font = "bold 24px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("PRESS ARROWS TO START", canvas.width / 2, canvas.height / 2);
+}
+
+window.addEventListener('keydown', () => {
+  if (!GAME.running) {
+    SNAKE.body = [{ x: 8, y: 10 }, { x: 7, y: 10 }, { x: 6, y: 10 }];
+    SNAKE.direction = { x: 1, y: 0 };
+    SNAKE.nextDirection = { x: 1, y: 0 };
+    GAME.score = 0;
+    GAME.tickRate = CONFIG.initialSpeed;
+    GAME.running = true;
+    appleCountText.innerText = "0";
+  }
+});
+
+init();
+
+let headVisualScale = 1.0;
+let boardShakeX = 0;
+let boardShakeY = 0;
+
+function triggerEatPhysics() {
+  headVisualScale = 1.3;
+  boardShakeX = (Math.random() - 0.5) * 8;
+  boardShakeY = (Math.random() - 0.5) * 8;
+}
+
+function updatePhysicsDecay() {
+  if (headVisualScale > 1.0) {
+    headVisualScale -= (headVisualScale - 1.0) * 0.15;
+  }
+  boardShakeX *= 0.9;
+  boardShakeY *= 0.9;
+  if (Math.abs(boardShakeX) < 0.05) boardShakeX = 0;
+  if (Math.abs(boardShakeY) < 0.05) boardShakeY = 0;
+}
+function drawSnakeHead(headX, headY) {
+  const size = CONFIG.tilePixelSize;
+  const px = headX * size;
+  const py = headY * size;
+
+  ctx.save();
+  ctx.translate(boardShakeX, boardShakeY);
+  ctx.translate(px + size / 2, py + size / 2);
+  ctx.scale(headVisualScale, headVisualScale);
+
+  const angle = Math.atan2(SNAKE.direction.y, SNAKE.direction.x);
+  ctx.rotate(angle);
+
+  ctx.fillStyle = CONFIG.snakeHeadColor;
+  ctx.beginPath();
+  ctx.roundRect(-size / 2 + 2, -size / 2 + 2, size - 4, size - 4, 8);
+  ctx.fill();
+
+  drawHeadEyes(size);
+  ctx.restore();
+}
+
+function drawHeadEyes(size) {
+  const eyeOffsetX = size * 0.2;
+  const eyeOffsetY = size * 0.25;
+
+  const dx = FOOD.x - SNAKE.body[0].x;
+  const dy = FOOD.y - SNAKE.body[0].y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  let pupilOffsetX = 2;
+  let pupilOffsetY = 0;
+
+  if (dist < 4) {
+    const angleToFood =
+      Math.atan2(dy, dx) - Math.atan2(SNAKE.direction.y, SNAKE.direction.x);
+    pupilOffsetX = Math.cos(angleToFood) * 3;
+    pupilOffsetY = Math.sin(angleToFood) * 3;
+  }
+
+  ctx.fillStyle = CONFIG.eyeColor;
+  ctx.beginPath();
+  ctx.arc(eyeOffsetX, -eyeOffsetY, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(eyeOffsetX, eyeOffsetY, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = CONFIG.pupilColor;
+  ctx.beginPath();
+  ctx.arc(eyeOffsetX + pupilOffsetX, -eyeOffsetY + pupilOffsetY, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(eyeOffsetX + pupilOffsetX, eyeOffsetY + pupilOffsetY, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+let tileReactions = [];
+
+function initTileReactions() {
+  tileReactions = [];
+  for (let i = 0; i < CONFIG.gridSize; i++) {
+    tileReactions[i] = [];
+    for (let j = 0; j < CONFIG.gridSize; j++) {
+      tileReactions[i][j] = 0;
+    }
+  }
+}
+
+function updateTileReactions() {
+  const head = SNAKE.body[0];
+  if (head && tileReactions[head.y]) {
+    tileReactions[head.y][head.x] = 1.0;
+  }
+
+  for (let y = 0; y < CONFIG.gridSize; y++) {
+    for (let x = 0; x < CONFIG.gridSize; x++) {
+      if (tileReactions[y][x] > 0) {
+        tileReactions[y][x] -= 0.05;
+      }
+    }
+  }
+}
+
+function drawGrid() {
+  const size = CONFIG.tilePixelSize;
+  for (let row = 0; row < CONFIG.gridSize; row++) {
+    for (let col = 0; col < CONFIG.gridSize; col++) {
+      let base = (row + col) % 2 === 0 ? '#aad751' : '#a2d149';
+      let reaction = tileReactions[row][col];
+      if (reaction > 0) {
+        ctx.fillStyle = interpolateColor(base, '#8cb341', reaction);
+      } else {
+        ctx.fillStyle = base;
+      }
+      ctx.fillRect(col * size, row * size, size, size);
+    }
+  }
+}
+
+function interpolateColor(color1, color2, factor) {
+  let r1 = parseInt(color1.substring(1, 3), 16);
+  let g1 = parseInt(color1.substring(3, 5), 16);
+  let b1 = parseInt(color1.substring(5, 7), 16);
+
+  let r2 = parseInt(color2.substring(1, 3), 16);
+  let g2 = parseInt(color2.substring(3, 5), 16);
+  let b2 = parseInt(color2.substring(5, 7), 16);
+
+  let r = Math.round(r1 + (r2 - r1) * factor);
+  let g = Math.round(g1 + (g2 - g1) * factor);
+  let b = Math.round(b1 + (b2 - b1) * factor);
+
+  return `rgb(${r},${g},${b})`;
+}
+
+function drawBodyJoint(current, previous, size) {
+  const cx = current.x * size + size / 2;
+  const cy = current.y * size + size / 2;
+  const px = previous.x * size + size / 2;
+  const py = previous.y * size + size / 2;
+
+  ctx.save();
+  ctx.strokeStyle = CONFIG.snakeBodyColor;
+  ctx.lineWidth = size - 8;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(px, py);
+  ctx.stroke();
+  ctx.restore();
+}
+
+let scorePopups = [];
+
+function createScorePopup(x, y) {
+  scorePopups.push({
+    x: x * CONFIG.tilePixelSize + CONFIG.tilePixelSize / 2,
+    y: y * CONFIG.tilePixelSize,
+    alpha: 1.0,
+    life: 40
+  });
+}
+
+function drawScorePopups() {
+  ctx.font = 'bold 20px Arial';
+  ctx.textAlign = 'center';
+
+  for (let i = scorePopups.length - 1; i >= 0; i--) {
+    let p = scorePopups[i];
+    ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
+    ctx.fillText('+1', p.x, p.y);
+    p.y -= 1;
+    p.alpha -= 0.025;
+    p.life--;
+    if (p.life <= 0) scorePopups.splice(i, 1);
+  }
+}
+
+let shockwaves = [];
+
+function createImpactWave(gridX, gridY) {
+  shockwaves.push({
+    x: gridX * CONFIG.tilePixelSize + CONFIG.tilePixelSize / 2,
+    y: gridY * CONFIG.tilePixelSize + CONFIG.tilePixelSize / 2,
+    radius: 5,
+    alpha: 0.8,
+    maxRadius: 80,
+    lineWidth: 4
+  });
+}
+
+function drawShockwaves() {
+  ctx.save();
+  for (let i = shockwaves.length - 1; i >= 0; i--) {
+    let sw = shockwaves[i];
+    sw.radius += (sw.maxRadius - sw.radius) * 0.15;
+    sw.alpha -= 0.04;
+    sw.lineWidth *= 0.92;
+
+    ctx.beginPath();
+    ctx.strokeStyle = `rgba(255, 255, 255, ${sw.alpha})`;
+    ctx.lineWidth = sw.lineWidth;
+    ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    if (sw.alpha <= 0 || sw.lineWidth < 0.1) {
+      shockwaves.splice(i, 1);
+    }
+  }
+  ctx.restore();
+}
+
+let shakeIntensity = 0;
+
+function triggerShake(amt) {
+  shakeIntensity = amt;
+}
+
+function updateShake() {
+  if (shakeIntensity > 0.1) {
+    shakeIntensity *= 0.9;
+  } else {
+    shakeIntensity = 0;
+  }
+}
+
+function applyMotionBlur() {
+  ctx.fillStyle = 'rgba(78, 124, 246, 0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function handleEatFood() {
+  GAME.score++;
+  appleCountText.innerText = GAME.score;
+
+  triggerEatPhysics();
+  triggerShake(6);
+  createImpactWave(FOOD.x, FOOD.y);
+  createScorePopup(FOOD.x, FOOD.y);
+
+  if (GAME.score % 3 === 0 && GAME.tickRate > 40) {
+    GAME.tickRate -= 4;
+  }
+
+  placeFood();
+}
+
+function mainLoop(timestamp) {
+  if (!GAME.lastFrameTime) GAME.lastFrameTime = timestamp;
+  const deltaTime = timestamp - GAME.lastFrameTime;
+  GAME.lastFrameTime = timestamp;
+
+  updatePhysicsDecay();
+  updateShake();
+  updateTileReactions();
+
+  if (GAME.running && !GAME.paused) {
+    GAME.accumulator += deltaTime;
+    while (GAME.accumulator >= GAME.tickRate) {
+      updateGameLogic();
+      GAME.accumulator -= GAME.tickRate;
+    }
+  }
+
+  ctx.save();
+  const sx = (Math.random() - 0.5) * shakeIntensity;
+  const sy = (Math.random() - 0.5) * shakeIntensity;
+  ctx.translate(sx, sy);
+
+  drawGrid();
+  drawBoardEdge();
+  drawShockwaves();
+  drawApple();
+  drawSnakeBody();
+  drawSnakeHead(SNAKE.body[0].x, SNAKE.body[0].y);
+  drawScorePopups();
+  ctx.restore();
+
+  if (!GAME.running) {
+    if (GAME.score > 0) drawGameOverScreen();
+    else drawStartMessage();
+  }
+
+  requestAnimationFrame(mainLoop);
+}
+
+initTileReactions();
+init();
+</script>
+</body>
+</html>

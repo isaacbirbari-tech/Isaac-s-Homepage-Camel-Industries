@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>2026 Annual Schedule | Camel Industries</title>
+    <style>
+        :root {
+            --bg-color: #f4e4bc;
+            --section-bg: rgba(255, 250, 240, 0.8);
+            --text-color: #333;
+            --heading-color: #a0522d;
+            --nav-bg: #a0522d;
+            --btn-bg: #8b4513;
+            --scroll-thumb: #000000;
+            --scroll-hover: #333333;
+            --card-header: #cd853f;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #2c241a;
+            --section-bg: rgba(50, 40, 30, 0.9);
+            --text-color: #f4e4bc;
+            --heading-color: #eeb462;
+            --nav-bg: #1a150f;
+            --btn-bg: #cd853f;
+            --scroll-thumb: #ffffff;
+            --scroll-hover: #e0e0e0;
+            --card-header: #8b4513;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 0;
+            margin: 0;
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        nav {
+            background-color: var(--nav-bg);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        nav a {
+            color: #fffaf0 !important;
+            text-decoration: none;
+            margin: 0 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--btn-bg);
+            color: #fffaf0;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 2000;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        h1 {
+            color: var(--heading-color);
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .month-card {
+            background-color: var(--section-bg);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #cd853f33;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, background-color 0.4s ease;
+        }
+
+        .month-card:hover {
+            transform: translateY(-5px);
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .month-name {
+            background-color: var(--card-header);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 4px 4px 0 0;
+            margin: -15px -15px 15px -15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            table-layout: fixed; 
+        }
+
+        th {
+            color: var(--btn-bg);
+            padding: 8px 0;
+            border-bottom: 1px solid #eeb462;
+            text-align: center;
+        }
+
+        td {
+            padding: 10px 0;
+            text-align: center;
+            color: var(--text-color);
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+
+        td:hover:not(:empty) {
+            background-color: orange;
+            color: white;
+            cursor: pointer;
+        }
+
+        footer {
+            text-align: center;
+            padding: 60px 40px;
+            color: var(--heading-color);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+    </style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Toggle Day/Night Mode">🌙</button>
+
+<nav>
+    <a href="index.html">Home</a>
+    <a href="arcade.html">Arcade</a>
+    <a href="ideas.html">Suggestions</a>
+</nav>
+
+<div class="container">
+    <h1>2026 Project Calendar</h1>
+    
+    <div class="calendar-grid">
+        <!-- January -->
+        <div class="month-card">
+            <div class="month-name">January</div>
+            <table>
+                <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                <tr><td></td><td></td><td></td><td></td><td>1</td><td>2</td><td>3</td></tr>
+                <tr><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td></tr>
+                <tr><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td></tr>
+                <tr><td>18</td><td class="event">19🕯️</td><td>20</td><td>21</td><td>22</td><td>23</td><td>24</td></tr>
+                <tr><td>25</td><td>26</td><td>27</td><td>28</td><td>29</td><td>30</td><td>31</td></tr>
+            </table>
+        </div>
+
+        <!-- February -->
+        <div class="month-card">
+            <div class="month-name">February</div>
+            <table>
+                <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                <tr><td>1</td><td class="event">2🦫</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+                <tr><td class="event">8🏈</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td class="event">14🌹</td></tr>
+                <tr><td>15</td><td class="event">16👴</td><td>17</td><td>18</td><td>19</td><td>20</td><td>21</td></tr>
+                <tr><td>22</td><td>23</td><td>24</td><td>25</td><td>26</td><td>27</td><td>28</td></tr>
+            </table>
+        </div>
+
+        <!-- March -->
+        <div class="month-card">
+            <div class="month-name">March</div>
+            <table>
+                <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                <tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+                <tr><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td></tr>
+                <tr><td>15</td><td>16</td><td class="event">17🍀</td><td>18</td><td>19</td><td>20</td><td>21</td></tr>
+                <tr><td>22</td><td>23</td><td>24</td><td>25</td><td>26</td><td>27</td><td>28</td></tr>
+                <tr><td>29</td><td>30</td><td>31</td><td></td><td></td><td></td><td></td></tr>
+            </table>
+        </div>
+
+        <!-- April -->
+        <div class="month-card">
+            <div class="month-name">April</div>
+            <table>
+                <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                <tr><td></td><td></td><td></td><td>1</td><td>2</td><td>3</td><td class=event><a href="isaac.html" target="_blank">4</td></tr>
+                <tr><td class="event">5🐣</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td></tr>
+                <tr><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td></tr>
+                <tr><td>19</td><td>20</td><td>21</td><td>22</td><td>23</td><td>24</td><td>25</td></tr>
+                <tr><td>26</td><td>27</td><td>28</td><td>29</td><td>30</td><td></td><td></td></tr>
+            </table>
+        </div>
+
+        <!-- May -->
+        <div class="month-card">
+            <div class="month-name">May</div>
+            <table>
+                <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td>1</td><td>2</td></tr>
+                <tr><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td></tr>
+                <tr><td class="event">10💐</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td></tr>
+                <tr><td>17</td><td>18</td><td>19</td><td>20</td><td>21</td><td>22</td><td>23</td></tr>
+                <tr><td>24</td><td class="event">25🎖️</td><td>26</td><td>27</td><td>28</td><td>29</td><td>30</td></tr>
+                <tr><td>31</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            </table>
+        </div>
+
+        <!-- June -->
+        <div class="month-card">
+            <div class="month-name">June</div>
+            <table>
+                <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                <tr><td></td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
+                <tr><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td></tr>
+                <tr><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td class="event">19✊</td><td>20</td></tr>
+                <tr><td class="event">21👔</td><td>22</td><td>23</td><td>24</td><td>25</td><td>26</td><td>27</td></tr>
+                <tr><td>28</td><td>29</td><td>30</td><td></td><td></td><td></td><td></td></tr>
+            </table>
+        </div>
+
+        <!-- July -->
+        <div class="month-card">
+            <div class="month-name">July</div>
+            <table>
+                <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                <tr><td></td><td></td><td></td><td>1</td><td>2</td><td>3</td><td class="event">4🎆</td></tr>
+                <tr><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td></tr>
+                <tr><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td></tr>
+                <tr><td>19</td><td>20</td><td>21</td><td>22</td><td>23</td><td>24</td><td>25</td></tr>
+                <tr><td>26</td><td>27</td><td>28</td><td>29</td><td>30</td><td>31</td><td></td></tr>
+            </table>
+        </div>
+
+        <!-- August -->
+        <div class="month-card">
+            <div class="month-name">August</div>
+            <table>
+                <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td><td></td><td>1</td></tr>
+                <tr><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td></tr>
+                <tr><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td></tr>
+                <tr><td>16</td><td>17</td><td>18</td><td>19</td><td>20</td><td>21</td><td>22</td></tr>
+                <tr><td>23</td><td>24</td><td>25</td><td>26</td><td>27</td><td>28</td><td>29</td></tr>
+                <tr><td>30</td><td>31</td><td></td><td></td><td></td><td></td><td></td></tr>
+            </table>
+        </div>
+
+        <!-- September -->
+        <div class="month-card">
+            <div class="month-name">September</div>
+            <table>
+                <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                <tr><td></td><td></td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+                <tr><td>6</td><td class="event">7🛠️</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td></tr>
+                <tr><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>19</td></tr>
+                <tr><td>20</td><td>21</td><td>22</td><td>23</td><td>24</td><td>25</td><td>26</td></tr>
+                <tr><td>27</td><td>28</td><td>29</td><td>30</td><td></td><td></td><td></td></tr>
+            </table>
+        </div>
+
+        <!-- October -->
+        <div class="month-card">
+            <div class="month-name">October</div>
+            <table>
+                <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                <tr><td></td><td></td><td></td><td></td><td>1</td><td>2</td><td>3</td></tr>
+                <tr><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td></tr>
+                <tr><td>11</td><td class="event">12⛵</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td></tr>
+                <tr><td>18</td><td>19</td><td>20</td><td>21</td><td>22</td><td>23</td><td>24</td></tr>
+                <tr><td>25</td><td>26</td><td>27</td><td>28</td><td>29</td><td>30</td><td class="event">31🎃</td></tr>
+            </table>
+        </div>
+
+        <!-- November -->
+        <div class="month-card">
+            <div class="month-name">November</div>
+            <table>
+                <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                <tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+                <tr><td>8</td><td>9</td><td>10</td><td class="event">11🎖️</td><td>12</td><td>13</td><td>14</td></tr>
+                <tr><td>15</td><td>16</td><td>17</td><td>18</td><td>19</td><td>20</td><td>21</td></tr>
+                <tr><td>22</td><td>23</td><td>24</td><td>25</td><td class="event">26🦃</td><td>27</td><td>28</td></tr>
+                <tr><td>29</td><td>30</td><td></td><td></td><td></td><td></td><td></td></tr>
+            </table>
+        </div>
+
+        <!-- December -->
+        <div class="month-card">
+            <div class="month-name">December</div>
+            <table>
+                <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                <tr><td></td><td></td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+                <tr><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td></tr>
+                <tr><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>19</td></tr>
+                <tr><td>20</td><td>21</td><td>22</td><td>23</td><td>24</td><td class="event">25🎄</td><td>26</td></tr>
+                <tr><td>27</td><td>28</td><td>29</td><td>30</td><td>31</td><td></td><td></td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<footer>Camel Industries™</footer>
+
+<script>
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('themeBtn').innerHTML = "☀️";
+    }
+
+    function toggleTheme() {
+        const html = document.documentElement;
+        const btn = document.getElementById('themeBtn');
+        if (html.getAttribute('data-theme') === 'dark') {
+            html.removeAttribute('data-theme');
+            btn.innerHTML = "🌙";
+            localStorage.setItem('theme', 'light');
+        } else {
+            html.setAttribute('data-theme', 'dark');
+            btn.innerHTML = "☀️";
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+</script>
+
+</body>
+</html>

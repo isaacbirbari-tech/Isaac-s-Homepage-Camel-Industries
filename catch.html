@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Catch Larry (EASY MODE)</title>
+    <style>
+        body {
+            background-color: #1a1a2e;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            text-align: center;
+            user-select: none;
+            height: 100vh;
+            transition: background-color 0.05s;
+        }
+
+        #game_piece {
+            background-image: url("https://codehs.com/uploads/0dbe424076208682d006a9e32327e291");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            transition: all 0.1s ease-out;
+            cursor: pointer;
+            filter: drop-shadow(0px 0px 15px #ff0055);
+            z-index: 10;
+        }
+
+        h1 {
+            margin-top: 20px;
+            color: #ff0055;
+            text-shadow: 0 0 10px #ff0055;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        nav {
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        nav a {
+            color: #ff0055;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+        }
+
+        .score-card {
+            font-size: 24px;
+            color: #00d4ff;
+            background: rgba(255, 255, 255, 0.05);
+            display: inline-block;
+            padding: 10px 30px;
+            border-radius: 5px;
+            border: 1px solid #00d4ff;
+            margin-top: 10px;
+        }
+
+        #taunt {
+            color: #fff;
+            margin-top: 15px;
+            font-style: italic;
+            height: 20px;
+        }
+
+        .crush-wall {
+            position: fixed;
+            background: #ff0055;
+            box-shadow: 0 0 50px #ff0055;
+            z-index: 100;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="arcade.html">Back</a>
+    </nav>
+
+    <div id="game-container">
+        <h1>Catch Larry</h1>
+        <div class="score-card">Score: <span id="score">0</span></div>
+        <div id="taunt">He's waiting...</div>
+        <div id="game_piece"></div>
+    </div>
+
+    <!-- Walls -->
+    <div id="w-top" class="crush-wall" style="top:0; left:0; width:100%;"></div>
+    <div id="w-bottom" class="crush-wall" style="bottom:0; left:0; width:100%;"></div>
+    <div id="w-left" class="crush-wall" style="top:0; left:0; height:100%;"></div>
+    <div id="w-right" class="crush-wall" style="top:0; right:0; height:100%;"></div>
+
+    <script>
+        const piece = document.getElementById('game_piece');
+        const scoreDisplay = document.getElementById('score');
+        const tauntBox = document.getElementById('taunt');
+        let score = 0;
+        let isAngry = false;
+        let mouseX = 0;
+        let mouseY = 0;
+        let difficultyMultiplier = 1;
+
+        const taunts = [
+            "Too slow!", "Not even close.", "Is that your best?", 
+            "I'm over here now!", "Try clicking harder?", "Yawn...", 
+            "You Suck!", "My grandma is faster."
+        ];
+
+        function triggerDeath() {
+            score = 0;
+            scoreDisplay.innerText = score;
+            tauntBox.innerText = "WASTED! RESTARTING...";
+            document.body.style.backgroundColor = "red";
+            setTimeout(() => { location.reload(); }, 800);
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            const rect = piece.getBoundingClientRect();
+            const distance = Math.hypot(e.clientX - (rect.left + 100), e.clientY - (rect.top + 100));
+            if (distance < 150 && !isAngry) moveLarry();
+        });
+
+        function spawnFireballRow() {
+            const modes = ['V', 'H', 'D'];
+            const mode = modes[Math.floor(Math.random() * modes.length)];
+            const numBalls = 9;
+            const gapIndex = Math.floor(Math.random() * numBalls);
+            const ballSpeed = 15 * difficultyMultiplier;
+
+            for (let i = 0; i < numBalls; i++) {
+                if (i === gapIndex) continue;
+                const ball = document.createElement('div');
+                ball.style.cssText = `position: absolute; width: 45px; height: 45px; background: #ffaa00; border-radius: 50%; box-shadow: 0 0 30px #ff0000; pointer-events: none; z-index: 5;`;
+                document.body.appendChild(ball);
+
+                let curX, curY;
+                if (mode === 'V') { curX = i * (window.innerWidth / numBalls); curY = -60; }
+                else if (mode === 'H') { curX = -60; curY = i * (window.innerHeight / numBalls); }
+                else { curX = i * (window.innerWidth / numBalls) - 400; curY = -60; }
+
+                ball.style.left = curX + 'px';
+                ball.style.top = curY + 'px';
+
+                const ballMove = setInterval(() => {
+                    if (mode === 'V') curY += ballSpeed;
+                    else if (mode === 'H') curX += ballSpeed;
+                    else { curX += ballSpeed; curY += ballSpeed; }
+
+                    ball.style.top = curY + 'px';
+                    ball.style.left = curX + 'px';
+
+                    if (Math.hypot(mouseX - (curX + 22), mouseY - (curY + 22)) < 35) {
+                        triggerDeath();
+                        clearInterval(ballMove);
+                        ball.remove();
+                    }
+                    if (curY > window.innerHeight + 100 || curX > window.innerWidth + 100) {
+                        clearInterval(ballMove);
+                        ball.remove();
+                    }
+                }, 16);
+            }
+        }
+
+        function startWallCrush() {
+            isAngry = true;
+            tauntBox.innerText = "DON'T GET PINCHED!!";
+            const wT = document.getElementById('w-top'), wB = document.getElementById('w-bottom');
+            const wL = document.getElementById('w-left'), wR = document.getElementById('w-right');
+            [wT, wB, wL, wR].forEach(w => w.style.display = 'block');
+            let size = 0;
+            const crushTimer = setInterval(() => {
+                size += 5.5;
+                wT.style.height = size + "px";
+                wB.style.height = size + "px";
+                wL.style.width = size + "px";
+                wR.style.width = size + "px";
+                if (mouseY < size || mouseY > (window.innerHeight - size) || mouseX < size || mouseX > (window.innerWidth - size)) {
+                    clearInterval(crushTimer);
+                    triggerDeath();
+                }
+                if (size > window.innerHeight / 2.3) {
+                    clearInterval(crushTimer);
+                    tauntBox.innerText = "SURVIVAL!";
+                    setTimeout(() => {
+                        [wT, wB, wL, wR].forEach(w => { w.style.display = "none"; });
+                        isAngry = false;
+                        moveLarry();
+                    }, 2000);
+                }
+            }, 30);
+        }
+
+        function moveLarry() {
+            const size = 150;
+            piece.style.left = `${Math.random() * (window.innerWidth - size)}px`;
+            piece.style.top = `${Math.max(150, Math.random() * (window.innerHeight - size))}px`;
+            if(!isAngry) {
+                tauntBox.innerText = taunts[Math.floor(Math.random() * taunts.length)];
+            }
+        }
+
+        function startAngryMode() {
+            isAngry = true;
+            tauntBox.innerText = "!!! DODGE !!!";
+            piece.style.filter = "drop-shadow(0px 0px 50px #ff0000) hue-rotate(180deg) invert(1)";
+            const frenzy = setInterval(spawnFireballRow, 550);
+            setTimeout(() => {
+                clearInterval(frenzy);
+                isAngry = false;
+                piece.style.filter = "drop-shadow(0px 0px 15px #ff0055)";
+                moveLarry();
+            }, 10000);
+        }
+
+        piece.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            if(isAngry) return;
+            score++;
+            scoreDisplay.innerText = score;
+            if (score === 10) startAngryMode();
+            else if (score === 20) startWallCrush();
+            else {
+                tauntBox.innerText = "LUCKY SHOT!";
+                moveLarry();
+            }
+        });
+
+        moveLarry();
+    </script>
+</body>
+</html>

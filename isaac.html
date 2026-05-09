@@ -1,0 +1,321 @@
+<!doctype html>
+<html>
+<head>
+  
+  <title>Camel | Industries</title>
+
+  <style>
+    body{
+      margin:0;
+      min-height:100vh;
+      color:#fff;
+      font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display:grid;
+      gap:20px;
+      padding:40px;
+      justify-content:center;
+      background:
+        radial-gradient(1px 1px at 25% 35%, white 100%, transparent 0),
+        radial-gradient(1px 1px at 50% 10%, white 100%, transparent 0),
+        radial-gradient(1px 1px at 75% 50%, white 100%, transparent 0),
+        radial-gradient(2px 2px at 15% 70%, rgba(255,255,255,0.8) 100%, transparent 0),
+        radial-gradient(2px 2px at 85% 20%, rgba(255,255,255,0.7) 100%, transparent 0),
+        radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+      background-size:500px 500px,400px 400px,300px 300px,600px 600px,700px 700px,100% 100%;
+      background-attachment: fixed;
+      box-sizing:border-box;
+    }
+
+    nav{
+      background-color: var(--nav-bg);
+      padding:20px;
+      text-align:center;
+      position:sticky;
+      top:0;
+      z-index:1000;
+      box-shadow:0 2px 10px rgba(0,0,0,0.1);
+      transition:background-color .4s ease;
+    }
+    nav a{
+      color:#fffaf0;
+      text-decoration:none;
+      margin:0 12px;
+      font-weight:bold;
+      text-transform:uppercase;
+      font-size:0.85rem;
+      letter-spacing:1px;
+    }
+
+    h1{
+      color:var(--heading-color);
+      font-family:'Arial Black', sans-serif;
+      text-transform:uppercase;
+      letter-spacing:2px;
+      text-shadow:2px 2px 4px #000;
+      text-align:center;
+      margin:0 auto;
+      overflow:hidden;
+      white-space:nowrap;
+      border-right:3px solid var(--heading-color);
+      width:0;
+      animation:typing 3.5s steps(30,end) forwards, blink-caret .75s step-end 5;
+      max-width:100%;
+    }
+    @keyframes typing{ from{width:0} to{width:59%} }
+    @keyframes blink-caret{ from,to{border-color:transparent} 50%{border-color:var(--heading-color)} }
+
+    hr{ border:none; height:2px; background-color:var(--heading-color); margin:20px 0; }
+
+    a.button{
+      display:inline-block;
+      text-decoration:none;
+      color:#fff;
+      background:linear-gradient(145deg,#1e1e1e,#111);
+      padding:12px 24px;
+      border-radius:12px;
+      border:1px solid #333;
+      transition:all .3s ease;
+      min-width:150px;
+      text-align:center;
+      box-shadow:0 10px 20px rgba(0,0,0,0.5);
+      font-weight:bold;
+      text-transform:uppercase;
+      letter-spacing:1px;
+      cursor:pointer;
+    }
+    a.button:hover{ transform:translateY(-6px) scale(1.03); border-color:#e50914; box-shadow:0 0 20px rgba(229,9,20,0.4); color:#e50914; }
+    a.button.special{ background:linear-gradient(145deg,#2d2d2d,#1a1a1a); border-style:dashed; color:var(--heading-color); }
+
+    h2{ margin:0 0 12px 0; color:var(--heading-color); font-family:'Arial Black', sans-serif; }
+    h3{ color:var(--heading-color); font-family:'Arial Black', line-height:1.6; font-size:18px; text-align:left; margin:8px 0; }
+
+    footer{
+      text-align:center;
+      padding:40px;
+      color:var(--heading-color);
+      font-weight:bold;
+      text-transform:uppercase;
+      font-size:0.8rem;
+      letter-spacing:3px;
+      transition:color .4s ease;
+    }
+
+    .container{ max-width:920px; margin:0 auto; width:100%; }
+    .hero{ text-align:center; margin-bottom:20px; }
+    .controls{ display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin:16px 0; }
+    .visitor-note{ font-size:0.85rem; font-style:italic; margin-bottom:20px; color:var(--heading-color); }
+
+    textarea{
+      width:100%;
+      height:80px;
+      margin-top:10px;
+      padding:10px;
+      border-radius:4px;
+      border:1px solid var(--heading-color);
+      background:rgba(255,255,255,0.07);
+      color:white;
+      resize:vertical;
+      box-sizing:border-box;
+    }
+
+    .btn{
+      background-color:var(--btn-bg);
+      color:#fffaf0;
+      padding:12px 24px;
+      margin-top:15px;
+      border-radius:4px;
+      font-weight:bold;
+      border:none;
+      cursor:pointer;
+    }
+    .btn:hover{ filter:brightness(.95); }
+
+    .idea-list{ margin-top:30px; text-align:left; }
+    .idea-item{
+      background:rgba(255,255,255,0.06);
+      color:white;
+      padding:15px;
+      margin-bottom:12px;
+      border-radius:4px;
+      display:flex;
+      align-items:flex-start;
+      gap:15px;
+      align-items:center;
+    }
+    .idea-item.completed{ background:#2d3e50; opacity:0.9; }
+    .idea-text{ display:block; font-weight:bold; margin-bottom:5px; }
+    .idea-date{ display:block; font-size:0.75rem; opacity:0.7; font-style:italic; }
+    .delete-btn{ background:none; border:none; color:rgba(255,255,255,0.6); cursor:pointer; font-size:1.1rem; }
+
+    .checkbox-container input[type="checkbox"]{ width:22px; height:22px; cursor:pointer; accent-color:var(--check-green); }
+
+    ::-webkit-scrollbar{ width:6px; }
+    ::-webkit-scrollbar-track{ background:var(--bg-color); }
+    ::-webkit-scrollbar-thumb{ background-color:var(--scroll-thumb); border-radius:20px; }
+
+    img.thumbnail{ display:block; margin:12px auto; border-radius:8px; max-width:100%; height:auto; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="button">Home</a>
+    <a href="arcade.file" class="button">Arcade</a>
+  </nav>
+
+  <main class="container">
+    <header class="hero">
+      <h1>Welcome</h1>
+      <hr />
+      <div class="controls" aria-hidden="false">
+        <a class="button" role="button" onclick="openInBlank()">Open OverCloaked</a>
+        <a class="button" role="button" onclick="openinBlank()">Open Fern</a>
+        <a class="button" role="button" onclick="openinblank()">Open Brave</a>
+        <a class="button" role="button" onclick="openInblank()">Open Alexrs</a>
+        <a class="button" role="button" onclick="Openinblank()">Open TikTok</a>
+        <a class="button" role="button" onclick="OpenInBlank()">Open MP3</a>
+        <a class="button special" role="button" onclick="window.open('https://www.youtube.com/watch?v=QDia3e12czc','_blank')">Open YouTube</a>
+      </div>
+
+      <p style="max-width:680px;margin:0 auto;">
+        You have to first sign in on your phone. Then click the link.
+      </p>
+
+      <img class="thumbnail" src="https://codehs.com/uploads/691d605d41d836ade3d3769683f321c5" alt="thumbnail" width="250" height="200">
+    </header>
+
+    <section class="suggestion-box" style="margin-top:20px;">
+      <div class="container-card" style="background:transparent;">
+        <h2>Site Suggestion Box</h2>
+        <p class="visitor-note">Visitors: Leave a site recommendation below!</p>
+
+        <textarea id="ideaInput" placeholder="Write your suggestion here..."></textarea>
+        <button class="btn" onclick="postIdea()">Submit Suggestion</button>
+
+        <div class="idea-list" id="ideaList" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>Camel Industries™</footer>
+
+  <script>
+    function openInBlank(){
+      const newWindow = window.open("about:blank","_blank");
+      const myHtml = `
+        <style>body{margin:0;overflow:hidden}iframe{width:100%;height:100vh;border:0}</style>
+        <iframe src="https://engineering.calculus.biology.writing.grammar.energy-save.ro/"></iframe>
+      `;
+      newWindow.document.write(myHtml);
+      newWindow.document.close();
+    }
+
+    function openinBlank(){
+      const newWindow = window.open("about:blank","_blank");
+      const myHtml = `
+        <style>body{margin:0;overflow:hidden}iframe{width:100%;height:100vh;border:0}</style>
+        <iframe src="https://s3.amazonaws.com/ilovemaths/index.html"></iframe>
+      `;
+      newWindow.document.write(myHtml);
+      newWindow.document.close();
+    }
+
+    function openinblank(){
+      const newWindow = window.open("about:blank","_blank");
+      const myHtml = `
+        <style>body{margin:0;overflow:hidden}iframe{width:100%;height:100vh;border:0}</style>
+        <iframe src="https://sophia-sanchez-11.b-cdn.net/"></iframe>
+      `;
+      newWindow.document.write(myHtml);
+      newWindow.document.close();
+    }
+
+    function openInblank(){
+      const newWindow = window.open("about:blank","_blank");
+      const myHtml = `
+        <style>body{margin:0;overflow:hidden}iframe{width:100%;height:100vh;border:0}</style>
+        <iframe src="https://script.google.com/a/macros/student.ycs.wednet.edu/s/AKfycbzlwXJdKXGxqt9m63jZSpHshsID3sUfWc6njU-Ot0cXlLFWSmVp-plid55Xx0yV8EYa4w/exec"></iframe>
+      `;
+      newWindow.document.write(myHtml);
+      newWindow.document.close();
+    }
+
+    function Openinblank(){
+      const newWindow = window.open("about:blank","_blank");
+      const myHtml = `
+        <style>body{margin:0;overflow:hidden}iframe{width:100%;height:100vh;border:0}</style>
+        <iframe src="https://s3.amazonaws.com/ilovemaths/index.html?route=%2Fsearch%3Fquery%3DaHR0cHM6Ly93d3cudGlrdG9rLmNvbQ%253D%253D"></iframe>
+      `;
+      newWindow.document.write(myHtml);
+      newWindow.document.close();
+    }
+
+    function OpenInBlank(){
+      const newWindow = window.open("about:blank","_blank");
+      const myHtml = `
+        <style>body{margin:0;overflow:hidden}iframe{width:100%;height:100vh;border:0}</style>
+        <iframe src="https://downmp3.yt/eneR/youtube-video-downloader"></iframe>
+      `;
+      newWindow.document.write(myHtml);
+      newWindow.document.close();
+    }
+
+    function postIdea(){
+      const input = document.getElementById('ideaInput');
+      const text = input.value.trim();
+      if(!text) return;
+      const now = new Date();
+      const dateString = now.toLocaleDateString() + " at " + now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      const ideaObject = { text: text, date: dateString, completed: false };
+      const savedIdeas = JSON.parse(localStorage.getItem('camelIdeas')) || [];
+      savedIdeas.unshift(ideaObject);
+      localStorage.setItem('camelIdeas', JSON.stringify(savedIdeas));
+      input.value = "";
+      displayIdeas();
+    }
+
+    function displayIdeas(){
+      const list = document.getElementById('ideaList');
+      const savedIdeas = JSON.parse(localStorage.getItem('camelIdeas')) || [];
+      list.innerHTML = "";
+      savedIdeas.forEach((idea, index) => {
+        const newItem = document.createElement('div');
+        newItem.className = 'idea-item' + (idea.completed ? ' completed' : '');
+        newItem.innerHTML = `
+          <div class="checkbox-container">
+            <input type="checkbox" ${idea.completed ? 'checked' : ''} onclick="toggleComplete(${index})" aria-label="Mark complete">
+          </div>
+          <div style="flex:1">
+            <span class="idea-text">💬 ${escapeHtml(idea.text)}</span>
+            <span class="idea-date">${escapeHtml(idea.date)}</span>
+          </div>
+          <button class="delete-btn" onclick="deleteIdea(${index})" aria-label="Delete">✕</button>
+        `;
+        list.appendChild(newItem);
+      });
+    }
+
+    function toggleComplete(index){
+      const savedIdeas = JSON.parse(localStorage.getItem('camelIdeas')) || [];
+      if(!savedIdeas[index]) return;
+      savedIdeas[index].completed = !savedIdeas[index].completed;
+      localStorage.setItem('camelIdeas', JSON.stringify(savedIdeas));
+      displayIdeas();
+    }
+
+    function deleteIdea(index){
+      if(!confirm("Remove this comment?")) return;
+      const savedIdeas = JSON.parse(localStorage.getItem('camelIdeas')) || [];
+      savedIdeas.splice(index,1);
+      localStorage.setItem('camelIdeas', JSON.stringify(savedIdeas));
+      displayIdeas();
+    }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); });
+    }
+
+    // initialize on load
+    document.addEventListener('DOMContentLoaded', displayIdeas);
+  </script>
+</body>
+</html>

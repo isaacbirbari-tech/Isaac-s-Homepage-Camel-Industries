@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Basketball(Alpha)</title>
+    <style>
+        :root {
+            --bg-color: #f4e4bc;
+            --section-bg: rgba(255, 250, 240, 0.9);
+            --text-color: #333;
+            --heading-color: #a0522d;
+            --nav-bg: #a0522d;
+            --btn-bg: #8b4513;
+            --green: #2ecc71;
+            --gold: #FDB927;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        nav {
+            background-color: var(--nav-bg);
+            padding: 10px;
+            text-align: center;
+            width: 100%;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .score-sheet {
+            display: flex;
+            gap: 40px;
+            background: var(--btn-bg);
+            color: white;
+            padding: 8px 40px;
+            border-radius: 0 0 20px 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .score-box span {
+            color: var(--gold);
+        }
+
+        .main-layout {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            background: var(--section-bg);
+            padding: 20px;
+            border-radius: 15px;
+            border: 3px solid var(--btn-bg);
+        }
+
+        .meter-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .meter-label {
+            font-weight: bold;
+            font-size: 11px;
+            color: var(--btn-bg);
+        }
+
+        .meter {
+            width: 35px;
+            height: 130px;
+            background: #222;
+            border: 3px solid #444;
+            position: relative;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .green-zone {
+            position: absolute;
+            width: 100%;
+            background: var(--green);
+            bottom: 70%;
+            height: 15%;
+            box-shadow: 0 0 10px var(--green);
+        }
+
+        .indicator {
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: #fff;
+            bottom: 0;
+            box-shadow: 0 0 8px #fff;
+        }
+
+        canvas {
+            background-color: #000;
+            border-radius: 12px;
+            cursor: pointer;
+            image-rendering: pixelated;
+            border: 5px solid var(--btn-bg);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="arcade.file">Back</a>
+    </nav>
+
+    <div class="score-sheet">
+        <div class="score-box">STREAK: <span id="current-score">0</span></div>
+        <div class="score-box">BEST: <span id="high-score">0</span></div>
+    </div>
+
+    <div class="main-layout">
+        <div class="control-panel">
+            <div class="meter-group">
+                <div class="meter-label">POWER</div>
+                <div class="meter">
+                    <div class="green-zone"></div>
+                    <div class="indicator" id="p-ind"></div>
+                </div>
+            </div>
+            <div class="meter-group">
+                <div class="meter-label">ANGLE</div>
+                <div class="meter">
+                    <div class="green-zone"></div>
+                    <div class="indicator" id="a-ind"></div>
+                </div>
+            </div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const streakEl = document.getElementById("current-score");
+        const highEl = document.getElementById("high-score");
+        canvas.width = 800;
+        canvas.height = 450;
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'cheer') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+            } else if (type === 'boo') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.8);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+            } else if (type === 'block') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            }
+            osc.start();
+            osc.stop(audioCtx.currentTime + 1.2);
+        }
+
+        let score = 0;
+        let highScore = localStorage.getItem("lbj_hd_best") || 0;
+        highEl.innerText = highScore;
+
+        const GRAVITY = 0.45;
+        const GROUND_Y = 410;
+        let ball = { x: 720, y: 390, vx: 0, vy: 0, rot: 0 };
+        let lebron = { x: 170, y: GROUND_Y, vy: 0, visible: false, tauntMsg: "" };
+        let gameState = "SET_POWER";
+        let camera = { scale: 1, targetScale: 1, focusX: 400, focusY: 225 };
+        let pVal = 0, aVal = 0, mDir = 1;
+        let mSpeed = 1.4;
+        const TAUNTS = ["NOT IN MY HOUSE!", "I'M THE KING!", "YOU THOUGHT!", "TOO SMALL!"];
+
+        function drawHDLeBron(x, y, isTaunting) {
+            let s = 1.5;
+            const C = { Skin: "#8d5524", SkinLight: "#a1662f", Beard: "#1a1a1a", Purple: "#552583", Gold: "#FDB927", White: "#ffffff", Headband: "#222" };
+            ctx.save();
+            let wobble = isTaunting ? Math.sin(Date.now() * 0.02) * 8 : 0;
+            ctx.translate(x + wobble, y);
+            ctx.fillStyle = C.Purple;
+            ctx.beginPath();
+            ctx.moveTo(-30 * s, 0);
+            ctx.quadraticCurveTo(0, -60 * s, 30 * s, 0);
+            ctx.fill();
+            ctx.fillStyle = C.Gold;
+            ctx.fillRect(-10 * s, -45 * s, 20 * s, 10 * s);
+            ctx.fillStyle = "white";
+            ctx.font = `bold ${18 * s}px Arial`;
+            ctx.fillText("23", -10 * s, -10 * s);
+            ctx.fillStyle = C.Skin;
+            ctx.beginPath();
+            ctx.arc(0, -80 * s, 25 * s, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = C.Beard;
+            ctx.beginPath();
+            ctx.arc(0, -65 * s, 15 * s, 0, Math.PI);
+            ctx.fill();
+            ctx.fillStyle = C.Headband;
+            ctx.fillRect(-26 * s, -95 * s, 52 * s, 10 * s);
+            if (isTaunting) {
+                ctx.fillStyle = C.Skin;
+                ctx.fillRect(-45 * s, -40 * s, 15 * s, 30 * s);
+                ctx.fillRect(30 * s, -40 * s, 15 * s, 30 * s);
+                ctx.fillStyle = "white";
+                ctx.fillRect(40 * s, -120 * s, 120 * s, 40 * s);
+                ctx.strokeStyle = "black";
+                ctx.strokeRect(40 * s, -120 * s, 120 * s, 40 * s);
+                ctx.fillStyle = "black";
+                ctx.font = "bold 18px Courier";
+                ctx.fillText(lebron.tauntMsg, 50 * s, -95 * s);
+            } else {
+                ctx.fillStyle = C.Skin;
+                ctx.fillRect(-35 * s, -140 * s, 12 * s, 80 * s);
+                ctx.fillRect(23 * s, -140 * s, 12 * s, 80 * s);
+            }
+            ctx.restore();
+        }
+
+        function reset() {
+            ball = { x: 720, y: 390, vx: 0, vy: 0, rot: 0 };
+            lebron = { x: 170, y: GROUND_Y, vy: 0, visible: false, tauntMsg: "" };
+            gameState = "SET_POWER";
+            camera.targetScale = 1;
+            pVal = 0; aVal = 0; mDir = 1;
+        }
+
+        function update() {
+            camera.scale += (camera.targetScale - camera.scale) * 0.08;
+            if (lebron.visible) {
+                camera.focusX = lebron.x;
+                camera.focusY = lebron.y - 100;
+            } else {
+                camera.focusX = 400;
+                camera.focusY = 225;
+            }
+
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.scale(camera.scale, camera.scale);
+            ctx.translate(-camera.focusX, -camera.focusY);
+
+            ctx.fillStyle = "#111";
+            ctx.fillRect(0, 0, 800, 450);
+            ctx.fillStyle = "#3a2512";
+            ctx.fillRect(0, GROUND_Y, 800, 40);
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(110, 90, 10, 110);
+            ctx.fillStyle = "#ff0000";
+            ctx.fillRect(120, 200, 50, 7);
+
+            if (gameState === "SET_POWER") {
+                pVal += mSpeed * mDir;
+                if (pVal > 100 || pVal < 0) mDir *= -1;
+                document.getElementById("p-ind").style.bottom = pVal + "%";
+            } else if (gameState === "SET_ANGLE") {
+                aVal += mSpeed * mDir;
+                if (aVal > 100 || aVal < 0) mDir *= -1;
+                document.getElementById("a-ind").style.bottom = aVal + "%";
+            }
+
+            if (gameState === "FLYING") {
+                ball.vy += GRAVITY;
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+                ball.rot += ball.vx * 0.08;
+                camera.targetScale = 1;
+
+                if (ball.x < 320 && ball.x > 280 && !lebron.visible && Math.random() < 0.25) {
+                    gameState = "CATCHING";
+                    lebron.visible = true;
+                    lebron.vy = -16;
+                    camera.targetScale = 2.0;
+                    playSound('block');
+                    playSound('cheer');
+                }
+
+                if (ball.x < 185 && ball.x > 140 && ball.y < 215 && ball.y > 190) {
+                    gameState = "SCORED";
+                    score++;
+                    streakEl.innerText = score;
+                    if (score > highScore) {
+                        highScore = score;
+                        localStorage.setItem("lbj_hd_best", score);
+                        highEl.innerText = score;
+                    }
+                    playSound('cheer');
+                    setTimeout(reset, 1500);
+                }
+
+                if (ball.y > 450 || ball.x < 0) {
+                    playSound('boo');
+                    reset();
+                }
+            }
+
+            if (gameState === "CATCHING") {
+                lebron.vy += GRAVITY;
+                lebron.y += lebron.vy;
+                ball.x = lebron.x;
+                ball.y = lebron.y - 120;
+                if (lebron.y >= GROUND_Y) {
+                    lebron.y = GROUND_Y;
+                    gameState = "TAUNTING";
+                    lebron.tauntMsg = TAUNTS[Math.floor(Math.random() * TAUNTS.length)];
+                    score = 0;
+                    streakEl.innerText = 0;
+                    setTimeout(reset, 4500);
+                }
+            }
+
+            if (lebron.visible) drawHDLeBron(lebron.x, lebron.y, gameState === "TAUNTING");
+
+            ctx.save();
+            ctx.translate(ball.x, ball.y);
+            ctx.rotate(ball.rot);
+            ctx.fillStyle = "#ff6600";
+            ctx.fillRect(-10, -10, 20, 20);
+            ctx.fillStyle = "#000";
+            ctx.fillRect(-10, -1, 20, 2);
+            ctx.fillRect(-1, -10, 2, 20);
+            ctx.restore();
+
+            ctx.restore();
+            requestAnimationFrame(update);
+        }
+
+        canvas.onclick = () => {
+            if (gameState === "SET_POWER") {
+                gameState = "SET_ANGLE";
+            } else if (gameState === "SET_ANGLE") {
+                gameState = "FLYING";
+                ball.vx = -(pVal / 10) - 5;
+                ball.vy = -(aVal / 5) - 10;
+            }
+        };
+
+        update();
+    </script>
+</body>
+</html>

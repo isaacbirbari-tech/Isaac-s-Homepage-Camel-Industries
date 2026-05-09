@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Desert Dash | Camel Industries</title>
+    <style>
+        :root {
+            --bg-color: #f4e4bc;
+            --ground-color: #a0522d;
+            --text-color: #333;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #2c241a;
+            --ground-color: #cd853f;
+            --text-color: #f4e4bc;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            transition: background 0.4s;
+        }
+
+        #game-canvas {
+            background: rgba(0, 0, 0, 0.05);
+            border-bottom: 4px solid var(--ground-color);
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .ui {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .score {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .btn-home {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 20px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ui">
+        <div class="score" id="score">0</div>
+        <div id="highScore">High Score: 0</div>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+
+    <div class="ui">
+        <p>Press <b>SPACE</b> to Jump | <b>Double Jump</b> Enabled</p>
+        <a href="index.html" class="btn-home">← Back to Camel Industries</a>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("game-canvas");
+        const ctx = canvas.getContext("2d");
+        const scoreEl = document.getElementById("score");
+        const highEl = document.getElementById("highScore");
+
+        canvas.width = 800;
+        canvas.height = 250;
+
+        let score = 0;
+        let highScore = localStorage.getItem("dashHigh") || 0;
+        let gameActive = true;
+        let frame = 0;
+        let shakeTime = 0;
+        const gravity = 0.6;
+        const jumpForce = -12;
+        let gameSpeed = 6;
+
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+
+        const particles = [];
+
+        function createDust(x, y) {
+            for (let i = 0; i < 3; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: -Math.random() * 3 - 1,
+                    vy: -Math.random() * 2,
+                    life: 1.0
+                });
+            }
+        }
+
+        const camel = {
+            x: 100,
+            y: 200,
+            w: 55,
+            h: 50,
+            dy: 0,
+            jumpCount: 0,
+            rotation: 0,
+            bobAngle: 0,
+            draw() {
+                ctx.save();
+                ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
+                ctx.scale(-1, 1); // Flipped to face RIGHT
+
+                let squishAmt = Math.min(Math.max(this.dy * 0.04, -0.15), 0.15);
+                let sX = 1 + squishAmt;
+                let sY = 1 - squishAmt;
+
+                ctx.scale(Math.max(sX, 0.1), Math.max(sY, 0.1));
+                
+                let bob = (this.y === 200) ? Math.sin(this.bobAngle) * 3 : 0;
+                this.bobAngle += 0.2;
+
+                if (this.y === 200 && frame % 5 === 0) createDust(this.x + 10, 240);
+                
+                if (this.y < 200) this.rotation = -this.dy * 0.03;
+                else this.rotation = 0;
+
+                ctx.rotate(this.rotation);
+                ctx.font = "42px serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("🐫", 0, bob);
+                ctx.restore();
+            },
+            update() {
+                this.dy += gravity;
+                this.y += this.dy;
+                if (this.y > 200) {
+                    if (this.dy > 5) shakeTime = 10;
+                    this.y = 200;
+                    this.dy = 0;
+                    this.jumpCount = 0;
+                }
+                this.draw();
+            },
+            jump() {
+                if (this.jumpCount < 2) {
+                    this.dy = jumpForce;
+                    this.jumpCount++;
+                    this.bobAngle = 0;
+                    createDust(this.x + 20, 240);
+                }
+            }
+        };
+
+        const obstacles = [];
+        class Obstacle {
+            constructor() {
+                this.x = 850;
+                this.w = 30;
+                this.h = 40 + Math.random() * 20;
+                this.y = canvas.height - this.h;
+            }
+            draw() {
+                ctx.font = "30px serif";
+                ctx.fillText("🌵", this.x, 240);
+            }
+            update() {
+                this.x -= gameSpeed;
+                this.draw();
+            }
+        }
+
+        function animate() {
+            if (!gameActive) return;
+            
+            ctx.save();
+            if (shakeTime > 0) {
+                ctx.translate(Math.random() * 4 - 2, Math.random() * 4 - 2);
+                shakeTime--;
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            frame++;
+            if (frame % 10 === 0) {
+                score++;
+                scoreEl.innerText = score;
+                gameSpeed += 0.005;
+            }
+
+            // Ground Line
+            ctx.beginPath();
+            ctx.moveTo(0, 245);
+            ctx.lineTo(canvas.width, 245);
+            ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--ground-color');
+            ctx.stroke();
+
+            particles.forEach((p, i) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.02;
+                ctx.fillStyle = `rgba(160, 82, 45, ${p.life})`;
+                ctx.fillRect(p.x, p.y, 4, 4);
+                if (p.life <= 0) particles.splice(i, 1);
+            });
+
+            camel.update();
+
+            let spawnRate = Math.max(50, Math.floor(100 - (gameSpeed * 1.5)));
+            if (frame % spawnRate === 0) {
+                obstacles.push(new Obstacle());
+            }
+
+            obstacles.forEach((obs, index) => {
+                obs.update();
+                if (obs.x < camel.x + camel.w - 15 && obs.x + obs.w > camel.x + 15 && camel.y + camel.h > obs.y) {
+                    gameOver();
+                }
+                if (obs.x < -50) obstacles.splice(index, 1);
+            });
+
+            ctx.restore();
+            requestAnimationFrame(animate);
+        }
+
+        function gameOver() {
+            gameActive = false;
+            shakeTime = 30;
+            if (score > highScore) localStorage.setItem("dashHigh", score);
+            setTimeout(() => {
+                alert(`GAME OVER\nScore: ${score}\nBest: ${localStorage.getItem("dashHigh")}`);
+                location.reload();
+            }, 100);
+        }
+
+        window.addEventListener("keydown", (e) => {
+            if (e.code === "Space") {
+                e.preventDefault();
+                camel.jump();
+            }
+        });
+
+        canvas.addEventListener("mousedown", () => camel.jump());
+
+        highEl.innerText = `High Score: ${highScore}`;
+        animate();
+    </script>
+</body>
+</html>

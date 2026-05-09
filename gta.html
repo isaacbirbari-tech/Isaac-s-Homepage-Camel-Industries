@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GRAND THEFT RIPOFF</title>
+    <style>
+        :root {
+            --gta-green: #538b10;
+            --gta-bg: #1a1a1a;
+            --gta-panel: #282828;
+            --gta-text: #ffffff;
+            --gta-border: #444;
+            --gta-danger: #9d1616;
+            --gta-gold: #ffbc00;
+        }
+
+        body {
+            background-color: var(--gta-bg);
+            color: var(--gta-text);
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            letter-spacing: -0.5px;
+        }
+
+        a {
+            color: #ff0055;
+        }
+
+        #header {
+            background: #fff;
+            color: #000;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 4px solid var(--gta-green);
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        #main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 25px;
+            gap: 20px;
+            overflow: hidden;
+        }
+
+        #log {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.8);
+            border-left: 5px solid var(--gta-green);
+            padding: 20px;
+            overflow-y: auto;
+            font-size: 16px;
+            line-height: 1.6;
+            font-weight: 500;
+            font-family: monospace;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        button {
+            background: var(--gta-panel);
+            color: #fff;
+            border: none;
+            padding: 15px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: 800;
+            font-size: 13px;
+            transition: all 0.1s ease;
+            text-align: left;
+            border-bottom: 3px solid transparent;
+        }
+
+        button:hover {
+            background: #333;
+            border-bottom: 3px solid var(--gta-green);
+            transform: scale(1.02);
+        }
+
+        .danger-btn {
+            color: #ff4444;
+        }
+
+        .danger-btn:hover {
+            border-bottom-color: var(--gta-danger);
+        }
+
+        .money-text {
+            color: var(--gta-green) !important;
+            font-weight: bold;
+        }
+
+        .death-text {
+            color: var(--gta-danger) !important;
+            font-weight: bold;
+        }
+
+        .mission-text {
+            color: var(--gta-gold) !important;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h3>
+        <a href="index.html">Home</a>
+        <a href="arcade.html">Back</a>
+    </h3>
+
+    <div id="header">
+        <div>DAY <span id="day">1</span></div>
+        <div>CASH: <span id="cash">$5,000</span></div>
+        <div>STOCK: <span id="product">100</span>/<span id="cap">500</span></div>
+        <div>HEAT: <span id="heat">0</span>%</div>
+        <div>MARKET: <span id="market">10</span>%</div>
+    </div>
+
+    <div id="main">
+        <div id="log">CONNECTED TO THE UNDERGROUND NETWORK...</div>
+        <div class="controls">
+            <button onclick="nextDay()">01. PASS TIME / PRODUCE</button>
+            <button onclick="manageShipments()">02. RUN PRODUCT</button>
+            <button onclick="recruit()">03. HIRE MUSCLE ($1.2K)</button>
+            <button onclick="upgrade()">04. BUY PROPERTY</button>
+            <button onclick="attack()">05. ELIMINATE RIVALS</button>
+            <button class="danger-btn" onclick="bribe()">06. PAY OFF COPS ($2.5K)</button>
+        </div>
+    </div>
+
+    <script>
+        const first_names = ["Alejandro", "Mateo", "Santiago", "Sebastian", "Leonardo", "Diego", "Nicolas", "Samuel", "Joaquin", "Tomas", "Gabriel", "Benjamin", "Lucas", "Adrian", "Daniel", "Hugo", "Isabella", "Sofia", "Camila", "Valentina", "Mariana", "Lucia", "Martina", "Ximena", "Elena", "Paula", "Andres", "Angel", "Carlos", "Cristian", "Eduardo", "Emiliano", "Enrique", "Esteban", "Facundo", "Felipe", "Fernando", "Francisco", "Gerardo", "Guillermo", "Ignacio", "Iker", "Ivan", "Javier", "Jesus", "Jorge", "Jose", "Juan", "Julian", "Luis"];
+        const last_names = ["Garcia", "Rodriguez", "Hernandez", "Martinez", "Lopez", "Gonzalez", "Perez", "Sanchez", "Ramirez", "Torres", "Flores", "Rivera", "Gomez", "Diaz", "Reyes", "Morales", "Castillo", "Ortiz", "Gutierrez", "Chavez", "Navarro", "Ruiz", "Vargas", "Jimenez", "Mendoza", "Rojas", "Soto", "Acosta", "Silva", "Delgado", "Vega", "Rios", "Cortes", "Espinoza", "Serrano", "Lara", "Salazar", "Luna", "Figueroa", "Miranda", "Mendez", "Pacheco", "Gallegos", "Guerrero", "Cabrera", "Ibarra", "Aguilar", "Medina", "Estrada"];
+        const titles = ["Cartel", "Syndicate", "Outfit", "Union", "Enterprise", "Alliance", "Network", "Group"];
+        const Cities = ["Medellin", "Cali", "Juarez", "Tijuana", "Miami", "Los Angeles", "Chicago", "New York", "London", "Amsterdam", "Berlin", "Madrid", "Tokyo", "Hong Kong", "Sydney", "Moscow"];
+
+        let state = {
+            cash: 5000,
+            product: 100,
+            day: 1,
+            heat: 0,
+            staff: [],
+            warehouse_lv: 1,
+            capacity: 500,
+            market_share: 10,
+            currentDestinations: []
+        };
+
+        function log(msg, className = "") {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += `<div class="${className}">> ${msg}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateUI() {
+            if (state.heat >= 100) {
+                document.body.innerHTML = `
+                <div style="background:#000; height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+                    <h1 style="color:#9d1616; font-size:120px; font-weight:900; margin:0;">BUSTED</h1>
+                    <button onclick="location.reload()" style="background:white; color:black; padding:20px; font-weight:bold; cursor:pointer;">RESTART</button>
+                </div>`;
+                return;
+            }
+            document.getElementById('day').innerText = state.day;
+            document.getElementById('cash').innerText = '$' + state.cash.toLocaleString();
+            document.getElementById('product').innerText = state.product;
+            document.getElementById('cap').innerText = state.capacity;
+            document.getElementById('heat').innerText = state.heat;
+            document.getElementById('market').innerText = state.market_share;
+        }
+
+        function updateMarket() {
+            state.currentDestinations = [];
+            let shuffled = [...Cities].sort(() => 0.5 - Math.random()).slice(0, 5);
+            shuffled.forEach(city => {
+                state.currentDestinations.push({
+                    name: city,
+                    base: Math.floor(Math.random() * 600) + 200,
+                    risk: Math.floor(Math.random() * 45) + 10,
+                    mult: [0.8, 1.2, 2.0, 3.5][Math.floor(Math.random() * 4)]
+                });
+            });
+        }
+
+        function nextDay() {
+            state.day++;
+            let prod = (state.staff.length * 25) + 50;
+            state.product = Math.min(state.capacity, state.product + prod);
+            state.heat = Math.max(0, state.heat - 5);
+            updateMarket();
+            log(`DAY ${state.day}: Production line added ${prod} units. Heat is cooling.`);
+            if (Math.random() < 0.3) triggerMission();
+            updateUI();
+        }
+
+        function recruit() {
+            let fee = 1200;
+            const fName = first_names[Math.floor(Math.random() * first_names.length)];
+            const lName = last_names[Math.floor(Math.random() * last_names.length)];
+            const fullName = `${fName} ${lName}`;
+            if (confirm(`Hire ${fullName} for $${fee}?`)) {
+                if (state.cash >= fee) {
+                    state.cash -= fee;
+                    state.staff.push({ name: fullName });
+                    log(`HIRED: ${fullName} joined the crew.`, "money-text");
+                } else {
+                    log("INSUFFICIENT FUNDS.", "death-text");
+                }
+            }
+            updateUI();
+        }
+
+        function triggerMission() {
+            const missions = [
+                { n: "Jewelry Store Job", pay: 12000, risk: 40 },
+                { n: "Bank Heist", pay: 40000, risk: 70 },
+                { n: "Armored Truck", pay: 9000, risk: 25 }
+            ];
+            const m = missions[Math.floor(Math.random() * missions.length)];
+            if (confirm(`INCOMING MISSION: ${m.n}\nPAY: $${m.pay}\nRISK: ${m.risk}%\nAccept?`)) {
+                log(`EXECUTING ${m.n.toUpperCase()}...`, "mission-text");
+                if (Math.random() * 100 > m.risk) {
+                    state.cash += m.pay;
+                    log(`SUCCESS: Scooped $${m.pay.toLocaleString()}`, "money-text");
+                } else {
+                    log(`FAILED: The job went south.`, "death-text");
+                    state.heat += 30;
+                }
+                updateUI();
+            }
+        }
+
+        function manageShipments() {
+            if (state.product <= 0) return log("OUT OF STOCK", "death-text");
+            if (state.currentDestinations.length === 0) updateMarket();
+            let msg = "SELECT DROP ZONE:\n";
+            state.currentDestinations.forEach((d, i) => {
+                msg += `${i + 1}. ${d.name} ($${Math.floor(d.base * d.mult)}/unit | Risk: ${d.risk}%)\n`;
+            });
+            let choice = parseInt(prompt(msg)) - 1;
+            let dest = state.currentDestinations[choice];
+            if (dest) {
+                let amt = parseInt(prompt(`Units to drop? (Max ${state.product})`));
+                if (amt > 0 && amt <= state.product) {
+                    state.product -= amt;
+                    if (Math.random() * 100 <= dest.risk) {
+                        log(`THE LSPD SEIZED THE SHIPMENT IN ${dest.name.toUpperCase()}!`, "death-text");
+                        state.heat += 25;
+                    } else {
+                        let profit = amt * Math.floor(dest.base * dest.mult);
+                        state.cash += profit;
+                        log(`DROP SUCCESSFUL: Made $${profit.toLocaleString()}`, "money-text");
+                    }
+                }
+            }
+            updateUI();
+        }
+
+        function bribe() {
+            if (state.cash >= 2500) {
+                state.cash -= 2500;
+                state.heat = 0;
+                log("LSPD PAID OFF. HEAT IS GONE.", "money-text");
+            } else {
+                log("NOT ENOUGH CASH.", "death-text");
+            }
+            updateUI();
+        }
+
+        function upgrade() {
+            let cost = state.warehouse_lv * 10000;
+            if (confirm(`Purchase new property for $${cost}?`)) {
+                if (state.cash >= cost) {
+                    state.cash -= cost;
+                    state.warehouse_lv++;
+                    state.capacity += 1000;
+                    log("PROPERTY ACQUIRED: Capacity increased.");
+                }
+            }
+            updateUI();
+        }
+
+        function attack() {
+            log("ATTACKING RIVALS...", "mission-text");
+            if (Math.random() > 0.5) {
+                state.market_share += 5;
+                log("TERRITORY EXPANDED.", "money-text");
+            } else {
+                log("REPELLED BY RIVAL GANG.", "death-text");
+                state.heat += 10;
+            }
+            updateUI();
+        }
+        
+        // Initialize market on load
+        updateMarket();
+    </script>
+</body>
+</html>
